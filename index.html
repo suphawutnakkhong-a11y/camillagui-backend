@@ -1,0 +1,1302 @@
+DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ระบบจัดการสินค้าน้องนอร์ทสุดหล่อ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Sarabun', 'Arial', sans-serif; background: #f8f9fa; }
+        .navbar-brand { font-weight: bold; }
+        .card, .table, .btn, .modal-content { border-radius: 12px; }
+        .card-header { background: #2c3e50; color: white; font-weight: bold; }
+        footer { margin-top: 50px; background: #2c3e50; color: white; padding: 20px 0; }
+        .form-control, .btn { border-radius: 8px; }
+        .hidden { display: none !important; }
+        .chart-container { position: relative; height: 300px; margin-top: 20px; }
+        @media print {
+            .no-print, .navbar, footer, .btn, .modal, .form-control { display: none !important; }
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; top: 0; left: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen" class="d-flex flex-column align-items-center justify-content-center vh-100 bg-primary text-white">
+    <h1><i class="fas fa-wrench"></i> ระบบจัดการสินค้าน้องนอร์ทสุดหล่อ</h1>
+    <p>ระบบสำหรับคนหล่อ</p>
+    <div class="bg-white p-4 rounded shadow text-dark" style="width: 300px;">
+        <h5 class="text-center mb-4">เข้าสู่ระบบ</h5>
+        <div class="mb-3">
+            <input type="text" id="username" class="form-control" placeholder="ชื่อผู้ใช้" value="admin" />
+        </div>
+        <div class="mb-3">
+            <input type="password" id="password" class="form-control" placeholder="รหัสผ่าน" value="1234" />
+        </div>
+        <button class="btn btn-primary w-100" onclick="login()">เข้าสู่ระบบ</button>
+    </div>
+</div>
+
+<div id="app" class="hidden">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
+        <div class="container">
+            <a class="navbar-brand" href="#" onclick="showSection('home')">🏍️ ระบบจัดการสินค้าน้องนอร์ทสุดหล่อ</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('products')"><i class="fas fa-box"></i> สินค้า</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('stock')"><i class="fas fa-dolly"></i> รับเข้าสต๊อก</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('transfer')"><i class="fas fa-exchange-alt"></i> โอนสต๊อก</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('customers')"><i class="fas fa-users"></i> ลูกค้า</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('repair')"><i class="fas fa-tools"></i> งานซ่อม</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('sales')"><i class="fas fa-cash-register"></i> การขาย</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('reports')"><i class="fas fa-chart-line"></i> รายงาน</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('settings')"><i class="fas fa-cog"></i> ตั้งค่า</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> ออก</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div id="home">
+            <div class="p-5 bg-white rounded shadow text-center">
+                <h1 class="display-6">ระบบจัดการสินค้าน้องนอร์ทสุดหล่อ</h1>
+                <p class="lead">ระบบจัดการสินค้าน้องนอร์ทสุดหล่อ</p>
+                <button class="btn btn-success btn-lg" onclick="showSection('sales')">เริ่มขายสินค้า</button>
+            </div>
+            <div class="row mt-5">
+                <div class="col-md-3"><div class="card text-white bg-info text-center"><div class="card-body"><h5>สินค้า</h5><h2 id="totalProducts">0</h2></div></div></div>
+                <div class="col-md-3"><div class="card text-white bg-warning text-center"><div class="card-body"><h5>ซ่อมวันนี้</h5><h2 id="todayRepairs">0</h2></div></div></div>
+                <div class="col-md-3"><div class="card text-white bg-success text-center"><div class="card-body"><h5>ยอดขายวันนี้</h5><h2 id="todaySales">0 บาท</h2></div></div></div>
+                <div class="col-md-3"><div class="card text-white bg-danger text-center"><div class="card-body"><h5>สต็อกต่ำ</h5><h2 id="lowStockCount">0</h2></div></div></div>
+            </div>
+        </div>
+
+        <div id="products" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="text-dark">📦 รายการอะไหล่</h2>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">➕ เพิ่มสินค้าใหม่</button>
+            </div>
+            <input type="text" id="searchProduct" class="form-control mb-3" placeholder="🔍 ค้นหาสินค้า..." />
+            <table class="table table-bordered" id="productTable">
+                <thead class="table-dark">
+                <tr>
+                    <th>รหัส</th>
+                    <th>ชื่อสินค้า</th>
+                    <th>ที่เก็บ</th>
+                    <th>ยี่ห้อ/รุ่นรถ</th>
+                    <th>ผู้จำหน่าย</th>
+                    <th>ราคาทุน</th>
+                    <th>ราคาขาย</th>
+                    <th>สต็อก</th>
+                    <th>ดำเนินการ</th>
+                </tr>
+                </thead>
+                <tbody id="productList"></tbody>
+            </table>
+        </div>
+
+        <div id="stock" class="d-none">
+            <h2 class="text-dark">📥 รับเข้าสต๊อกสินค้า</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <select id="stockProduct" class="form-select mb-3"></select>
+                    <div class="mb-3">
+                        <label>จำนวนที่รับเข้า</label>
+                        <input type="number" id="stockQty" class="form-control" min="1" value="1" />
+                    </div>
+                    <div class="mb-3">
+                        <label>ที่เก็บ</label>
+                        <input type="text" id="stockLocation" class="form-control" placeholder="เช่น ชั้นวาง A-1" />
+                    </div>
+                    <button class="btn btn-primary" onclick="addStock()">➕ เพิ่มสต๊อก</button>
+                </div>
+            </div>
+            <h4 class="mt-4">ประวัติการรับเข้า</h4>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                <tr>
+                    <th>สินค้า</th>
+                    <th>จำนวน</th>
+                    <th>ที่เก็บ</th>
+                    <th>วันที่</th>
+                </tr>
+                </thead>
+                <tbody id="stockHistory"></tbody>
+            </table>
+        </div>
+
+        <div id="transfer" class="d-none">
+            <h2 class="text-dark">🔄 โอนระหว่างสต๊อก</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label>เลือกสินค้า</label>
+                        <select id="transferProduct" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label>จำนวนที่โอน</label>
+                        <input type="number" id="transferQty" class="form-control" min="1" value="1" />
+                    </div>
+                    <div class="mb-3">
+                        <label>จากที่เก็บ</label>
+                        <input type="text" id="fromLocation" class="form-control" placeholder="ที่เก็บเดิม" />
+                    </div>
+                    <div class="mb-3">
+                        <label>ไปยังที่เก็บ</label>
+                        <input type="text" id="toLocation" class="form-control" placeholder="ที่เก็บใหม่" />
+                    </div>
+                    <button class="btn btn-warning" onclick="doTransfer()">โอนสต๊อก</button>
+                </div>
+            </div>
+            <h4 class="mt-4">ประวัติการโอน</h4>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                <tr>
+                    <th>สินค้า</th>
+                    <th>จำนวน</th>
+                    <th>จาก</th>
+                    <th>ไปยัง</th>
+                    <th>วันที่</th>
+                </tr>
+                </thead>
+                <tbody id="transferHistory"></tbody>
+            </table>
+        </div>
+
+        <div id="customers" class="d-none">
+            <div class="d-flex justify-content-between mb-3">
+                <h2 class="text-dark">👥 จัดการลูกค้า</h2>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCustomerModal">➕ เพิ่มลูกค้า</button>
+            </div>
+            <input type="text" id="searchCustomer" class="form-control mb-3" placeholder="ค้นหาลูกค้า..." />
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                <tr>
+                    <th>ชื่อ</th>
+                    <th>เบอร์โทร</th>
+                    <th>ที่อยู่</th>
+                    <th>ประวัติ</th>
+                </tr>
+                </thead>
+                <tbody id="customerList"></tbody>
+            </table>
+        </div>
+
+        <div id="repair" class="d-none">
+            <div class="d-flex justify-content-between mb-3">
+                <h2 class="text-dark">🔧 ระบบจัดการงานซ่อม</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRepairModal">➕ รับรถเข้าซ่อม</button>
+            </div>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                <tr>
+                    <th>เลขที่</th>
+                    <th>ลูกค้า</th>
+                    <th>รุ่นรถ</th>
+                    <th>อาการ</th>
+                    <th>สถานะ</th>
+                    <th>วันที่</th>
+                    <th>ดำเนินการ</th>
+                </tr>
+                </thead>
+                <tbody id="repairList"></tbody>
+            </table>
+        </div>
+
+        <div id="sales" class="d-none">
+            <h2 class="text-dark">💰 การขายสินค้า</h2>
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" id="searchSale" class="form-control mb-3" placeholder="พิมพ์ชื่อหรือรหัสสินค้าแล้วกด Enter" />
+                    <table class="table table-bordered" id="saleTable">
+                        <thead class="table-light">
+                        <tr>
+                            <th>สินค้า</th>
+                            <th>ที่เก็บ</th>
+                            <th>ราคา</th>
+                            <th>จำนวน</th>
+                            <th>ส่วนลด</th>
+                            <th>รวม</th>
+                            <th>ลบ</th>
+                        </tr>
+                        </thead>
+                        <tbody id="saleList"></tbody>
+                    </table>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">สรุปการขาย</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>ชื่อลูกค้า</label>
+                                <input type="text" id="customerName" class="form-control" placeholder="ไม่ระบุ" />
+                            </div>
+                            <p>ส่วนลดรวม: <strong id="totalDiscountSummary">0.00 บาท</strong></p>
+                            <p>ก่อนภาษี: <strong id="subTotal">0.00 บาท</strong></p>
+                            <p>ภาษี (<span id="vatRate">0</span>%): <strong id="taxAmount">0.00 บาท</strong></p>
+                            <p class="h4">ยอดรวมสุทธิ: <strong><span id="cartTotal">0</span> บาท</strong></p>
+                            <div class="mb-3">
+                                <label>เงินที่ได้รับ</label>
+                                <input type="number" id="cashReceived" class="form-control" />
+                            </div>
+                            <p>เงินทอน: <strong id="changeDue">0.00 บาท</strong></p>
+                            <button class="btn btn-success w-100" onclick="checkout()">ชำระเงิน</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports" class="d-none">
+            <h2 class="text-dark">📊 รายงาน</h2>
+            <ul class="nav nav-tabs" id="reportTabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" id="sales-tab" data-bs-toggle="tab" href="#sales-report-pane">รายงานยอดขาย</a></li>
+                <li class="nav-item"><a class="nav-link" id="stock-tab" data-bs-toggle="tab" href="#stock-report-pane">รายงานสต๊อก</a></li>
+            </ul>
+            <div class="tab-content" id="reportTabsContent">
+                <div class="tab-pane fade show active" id="sales-report-pane">
+                    <div class="row my-4">
+                        <div class="col-md-3"><div class="card bg-primary text-white text-center"><div class="card-body"><h5>ยอดขายวันนี้</h5><h3 id="reportSales">0 บาท</h3></div></div></div>
+                        <div class="col-md-3"><div class="card bg-success text-white text-center"><div class="card-body"><h5>กำไรวันนี้</h5><h3 id="dailyProfit">0 บาท</h3></div></div></div>
+                        <div class="col-md-3"><div class="card bg-info text-white text-center"><div class="card-body"><h5>ใบเสร็จ</h5><h3 id="reportInvoices">0</h3></div></div></div>
+                        <div class="col-md-3"><div class="card bg-warning text-dark text-center"><div class="card-body"><h5>สินค้าขายดี</h5><h4 id="bestSeller">-</h4></div></div></div>
+                    </div>
+                    <button class="btn btn-primary mb-4" onclick="generateSalesReport()">🔄 อัปเดตรายงาน</button>
+                    <h4>📈 ยอดขายรายสัปดาห์ (7 วันล่าสุด)</h4>
+                    <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
+                    <h4 class="mt-5">📈 ยอดขายรายเดือน (12 เดือนล่าสุด)</h4>
+                    <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+                    <h4 class="mt-5">รายการขายล่าสุด</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-dark">
+                            <tr><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th>รายการ</th><th>ยอดรวม</th></tr>
+                        </thead>
+                        <tbody id="recentSalesList"></tbody>
+                    </table>
+                </div>
+                <div class="tab-pane fade" id="stock-report-pane">
+                    <div class="mt-4">
+                        <h4>⚠️ สินค้าคงคลังต่ำ</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-danger">
+                                <tr><th>รหัส</th><th>ชื่อสินค้า</th><th>สต็อก</th><th>ที่เก็บ</th></tr>
+                            </thead>
+                            <tbody id="lowStockList"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <h4>📦 รายงานสต๊อกคงเหลือทั้งหมด</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-secondary">
+                                <tr><th>รหัส</th><th>ชื่อสินค้า</th><th>สต็อก</th><th>ที่เก็บ</th></tr>
+                            </thead>
+                            <tbody id="allStockList"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <h4>📥 ประวัติการรับเข้าและโอนย้าย</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr><th>สินค้า</th><th>จำนวน</th><th>จาก</th><th>ไปยัง</th><th>วันที่</th></tr>
+                            </thead>
+                            <tbody id="stockMovementHistory"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="d-none">
+            <h2 class="text-dark">⚙️ ตั้งค่าระบบ</h2>
+            <form id="settingForm" class="bg-white p-4 rounded shadow">
+                <h5>ข้อมูลร้าน</h5>
+                <div class="mb-3">
+                    <label>ชื่อร้าน</label>
+                    <input type="text" class="form-control" id="shopName" value="ร้านช่างเอ็ม" />
+                </div>
+                <div class="mb-3">
+                    <label>ที่อยู่</label>
+                    <input type="text" class="form-control" id="shopAddress" value="123 ถ.สุขุมวิท, กรุงเทพฯ" />
+                </div>
+                <div class="mb-3">
+                    <label>เบอร์โทร</label>
+                    <input type="text" class="form-control" id="shopPhone" value="02-123-4567" />
+                </div>
+                <div class="mb-3">
+                    <label>VAT (%)</label>
+                    <input type="number" class="form-control" id="shopVat" value="7" min="0" max="100" />
+                </div>
+                <button type="button" class="btn btn-success" onclick="saveSettings()">💾 บันทึก</button>
+            </form>
+            <div class="mt-4">
+                <button class="btn btn-secondary" onclick="backupData()">☁️ สำรองข้อมูล</button>
+                <button class="btn btn-secondary" onclick="restoreData()">📥 กู้คืนข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">➕ เพิ่มสินค้าใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="mb-3">
+                        <label>รหัสสินค้า</label>
+                        <input type="text" class="form-control" id="pCode" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>ชื่อสินค้า</label>
+                        <input type="text" class="form-control" id="pName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>ที่เก็บ</label>
+                        <input type="text" class="form-control" id="pLocation" placeholder="เช่น ชั้นวาง A-1" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>ยี่ห้อ/รุ่นรถ</label>
+                        <input type="text" class="form-control" id="pModel" />
+                    </div>
+                    <div class="mb-3">
+                        <label>ผู้จำหน่าย</label>
+                        <input type="text" class="form-control" id="pSupplier" />
+                    </div>
+                    <div class="mb-3">
+                        <label>ราคาทุน (บาท)</label>
+                        <input type="number" class="form-control" id="pCost" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>ราคาขาย (บาท)</label>
+                        <input type="number" class="form-control" id="pPrice" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>สต็อกเริ่มต้น</label>
+                        <input type="number" class="form-control" id="pStock" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>สต็อกขั้นต่ำที่ควรมี</label>
+                        <input type="number" class="form-control" id="pMinStock" value="5" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">บันทึกสินค้า</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">➕ เพิ่มลูกค้าใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <div class="mb-3">
+                        <label>ชื่อ</label>
+                        <input type="text" class="form-control" id="cName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>เบอร์โทร</label>
+                        <input type="text" class="form-control" id="cPhone" />
+                    </div>
+                    <div class="mb-3">
+                        <label>ที่อยู่</label>
+                        <textarea class="form-control" id="cAddress" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">บันทึก</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addRepairModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">➕ รับรถเข้าซ่อม</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="repairForm">
+                    <div class="mb-3">
+                        <label>ชื่อลูกค้า</label>
+                        <input type="text" class="form-control" id="rCustomer" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>เบอร์โทร</label>
+                        <input type="text" class="form-control" id="rPhone" />
+                    </div>
+                    <div class="mb-3">
+                        <label>ยี่ห้อรถ</label>
+                        <input type="text" class="form-control" id="rBrand" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>รุ่นรถ</label>
+                        <input type="text" class="form-control" id="rModel" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>อาการเสีย</label>
+                        <textarea class="form-control" id="rIssue" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">บันทึก</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="print-area" class="container" style="display:none;">
+    <h3 id="print-title"></h3>
+    <table class="table">
+        <tbody id="print-body"></tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="checkoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ชำระเงิน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="checkoutModalBody">
+                <p>ยอดรวมสุทธิ: <span id="modalCartTotal">0.00</span> บาท</p>
+                <div class="mb-3">
+                    <label>วิธีการชำระเงิน</label>
+                    <select class="form-select" id="paymentMethod">
+                        <option value="cash">เงินสด</option>
+                        <option value="transfer">โอน</option>
+                        <option value="credit">บัตรเครดิต</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="cashInputGroup">
+                    <label>เงินที่ได้รับ</label>
+                    <input type="number" id="modalCashReceived" class="form-control" />
+                    <p class="mt-2">เงินทอน: <strong id="modalChangeDue">0.00 บาท</strong></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-success" onclick="completeCheckout()">ยืนยันการชำระเงิน</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // --- Data Management & Initialization ---
+    const defaultData = {
+        products: [
+            { code: "SP001", name: "จานเบรกหน้า", location: "ชั้นวาง A-1", model: "Honda Wave", supplier: "A", cost: 180, price: 250, stock: 12, minStock: 5 },
+            { code: "SP002", name: "หัวเทียน NGK", location: "ชั้นวาง A-2", model: "ทุกรุ่น", supplier: "B", cost: 50, price: 80, stock: 5, minStock: 5 },
+            { code: "SP003", name: "ยางนอก IRC", location: "คลังสำรอง", model: "90/80-17", supplier: "A", cost: 600, price: 950, stock: 3, minStock: 5 },
+            { code: "SP004", name: "น้ำมันเครื่อง", location: "ชั้นวาง B-1", model: "ทุกรุ่น", supplier: "C", cost: 150, price: 200, stock: 20, minStock: 10 }
+        ],
+        sales: [],
+        repairs: [],
+        stockHistory: [],
+        transferHistory: [],
+        customers: [{ name: "คุณสมชาย", phone: "081-111-1111", address: "กรุงเทพฯ" }],
+        settings: {
+            shopName: "นอร์ท",
+            shopAddress: "123 ถ.สุขุมวิท, กรุงเทพฯ",
+            shopPhone: "02-123-4567",
+            shopVat: 7,
+        },
+    };
+
+    let cart = [];
+    let weeklyChart = null;
+    let monthlyChart = null;
+
+    function loadData(key) {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : defaultData[key];
+    }
+
+    function saveData(key, data) {
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    // --- Core Functions ---
+    function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        if (u === 'admin' && p === '1234') {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            showSection('home');
+        } else {
+            alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        }
+    }
+
+    function logout() {
+        if (confirm('ออกจากระบบหรือไม่?')) {
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+    }
+
+    function showSection(id) {
+        document.querySelectorAll("#home, #products, #stock, #transfer, #customers, #repair, #sales, #reports, #settings").forEach((el) => el.classList.add('d-none'));
+        document.getElementById(id).classList.remove('d-none');
+        updateUI(id);
+    }
+
+    function updateUI(sectionId) {
+        switch (sectionId) {
+            case 'home':
+                updateDashboard();
+                break;
+            case 'products':
+                renderProductsTable();
+                break;
+            case 'stock':
+                renderStockSelect();
+                renderStockHistory();
+                break;
+            case 'transfer':
+                renderTransferSelect();
+                renderTransferHistory();
+                break;
+            case 'customers':
+                renderCustomersTable();
+                break;
+            case 'repair':
+                renderRepairsTable();
+                break;
+            case 'sales':
+                renderSalesTable();
+                document.getElementById('searchSale').focus();
+                break;
+            case 'reports':
+                generateSalesReport();
+                generateStockReport();
+                break;
+            case 'settings':
+                loadSettings();
+                break;
+        }
+    }
+
+    // --- Home & Dashboard ---
+    function updateDashboard() {
+        const products = loadData('products');
+        const sales = loadData('sales');
+        const repairs = loadData('repairs');
+        const today = new Date().toISOString().split('T')[0];
+        const todaySales = sales.filter((s) => s.date.startsWith(today));
+        const todayRepairs = repairs.filter((r) => r.date.startsWith(today) && r.status !== 'เสร็จสิ้น');
+        const lowStock = products.filter((p) => p.stock <= p.minStock).length;
+        const totalSalesToday = todaySales.reduce((sum, s) => sum + s.total, 0);
+
+        document.getElementById('totalProducts').textContent = products.length;
+        document.getElementById('todayRepairs').textContent = todayRepairs.length;
+        document.getElementById('todaySales').textContent = totalSalesToday.toLocaleString() + ' บาท';
+        document.getElementById('lowStockCount').textContent = lowStock;
+    }
+
+    // --- Product Section ---
+    document.getElementById('productForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const products = loadData('products');
+        const newProduct = {
+            code: document.getElementById('pCode').value,
+            name: document.getElementById('pName').value,
+            location: document.getElementById('pLocation').value,
+            model: document.getElementById('pModel').value,
+            supplier: document.getElementById('pSupplier').value,
+            cost: parseInt(document.getElementById('pCost').value),
+            price: parseInt(document.getElementById('pPrice').value),
+            stock: parseInt(document.getElementById('pStock').value),
+            minStock: parseInt(document.getElementById('pMinStock').value)
+        };
+        products.push(newProduct);
+        saveData('products', products);
+        renderProductsTable();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+        modal.hide();
+        e.target.reset();
+        alert('เพิ่มสินค้าสำเร็จ');
+    });
+
+    function renderProductsTable() {
+        const products = loadData('products');
+        const tableBody = document.getElementById('productList');
+        tableBody.innerHTML = '';
+        products.forEach((p, index) => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${p.code}</td>
+                <td>${p.name}</td>
+                <td>${p.location || '-'}</td>
+                <td>${p.model}</td>
+                <td>${p.supplier}</td>
+                <td>${p.cost}</td>
+                <td>${p.price}</td>
+                <td class="${p.stock <= p.minStock ? 'text-danger fw-bold' : ''}">${p.stock}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="editProduct(${index})">แก้ไข</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${index})">ลบ</button>
+                </td>
+            `;
+        });
+    }
+
+    function editProduct(index) {
+        const products = loadData('products');
+        const p = products[index];
+        const newLocation = prompt(`แก้ไขที่เก็บของ ${p.name} (ปัจจุบัน: ${p.location}):`, p.location);
+        if (newLocation !== null && newLocation !== '') {
+            p.location = newLocation;
+            saveData('products', products);
+            renderProductsTable();
+            alert('แก้ไขที่เก็บสำเร็จ');
+        }
+    }
+
+    function deleteProduct(index) {
+        if (confirm('ยืนยันการลบสินค้า?')) {
+            const products = loadData('products');
+            products.splice(index, 1);
+            saveData('products', products);
+            renderProductsTable();
+            alert('ลบสินค้าสำเร็จ');
+        }
+    }
+
+    document.getElementById('searchProduct').addEventListener('keyup', (e) => {
+        const filter = e.target.value.toLowerCase();
+        const rows = document.getElementById('productList').querySelectorAll('tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
+
+    // --- Stock Section ---
+    function renderStockSelect() {
+        const products = loadData('products');
+        const select = document.getElementById('stockProduct');
+        select.innerHTML = products.map((p) => `<option value="${p.code}">${p.name} (${p.code})</option>`).join('');
+    }
+
+    function renderStockHistory() {
+        const history = loadData('stockHistory');
+        const products = loadData('products');
+        const tableBody = document.getElementById('stockHistory');
+        tableBody.innerHTML = '';
+        history.forEach((h) => {
+            const product = products.find((p) => p.code === h.code);
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${product ? product.name : h.code}</td>
+                <td>${h.qty}</td>
+                <td>${h.location || '-'}</td>
+                <td>${new Date(h.date).toLocaleString()}</td>
+            `;
+        });
+    }
+
+    function addStock() {
+        const code = document.getElementById('stockProduct').value;
+        const qty = parseInt(document.getElementById('stockQty').value);
+        const location = document.getElementById('stockLocation').value;
+        if (!code || isNaN(qty) || qty <= 0 || !location) {
+            alert('กรุณากรอกข้อมูลให้ถูกต้อง');
+            return;
+        }
+
+        const products = loadData('products');
+        const product = products.find((p) => p.code === code);
+        if (product) {
+            product.stock += qty;
+            product.location = location;
+            saveData('products', products);
+            const stockHistory = loadData('stockHistory');
+            stockHistory.unshift({ code, qty, location, date: new Date().toISOString() });
+            saveData('stockHistory', stockHistory);
+            renderStockHistory();
+            alert('เพิ่มสต็อกสำเร็จ');
+        } else {
+            alert('ไม่พบสินค้า');
+        }
+    }
+
+    // --- Transfer Section ---
+    function renderTransferSelect() {
+        const products = loadData('products');
+        const select = document.getElementById('transferProduct');
+        select.innerHTML = products.map((p) => `<option value="${p.code}">${p.name} (สต็อก: ${p.stock})</option>`).join('');
+    }
+
+    function renderTransferHistory() {
+        const history = loadData('transferHistory');
+        const products = loadData('products');
+        const tableBody = document.getElementById('transferHistory');
+        tableBody.innerHTML = '';
+        history.forEach((h) => {
+            const product = products.find((p) => p.code === h.code);
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${product ? product.name : h.code}</td>
+                <td>${h.qty}</td>
+                <td>${h.fromLocation || '-'}</td>
+                <td>${h.toLocation}</td>
+                <td>${new Date(h.date).toLocaleString()}</td>
+            `;
+        });
+    }
+
+    function doTransfer() {
+        const code = document.getElementById('transferProduct').value;
+        const qty = parseInt(document.getElementById('transferQty').value);
+        const fromLocation = document.getElementById('fromLocation').value;
+        const toLocation = document.getElementById('toLocation').value;
+
+        if (!code || isNaN(qty) || qty <= 0 || !fromLocation || !toLocation) {
+            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+            return;
+        }
+
+        const products = loadData('products');
+        const product = products.find((p) => p.code === code);
+        if (product && product.stock >= qty) {
+            product.stock -= qty;
+            product.location = toLocation;
+            saveData('products', products);
+            const transferHistory = loadData('transferHistory');
+            transferHistory.unshift({ code, qty, fromLocation, toLocation, date: new Date().toISOString() });
+            saveData('transferHistory', transferHistory);
+            renderTransferHistory();
+            alert(`โอนสินค้า ${product.name} จำนวน ${qty} ชิ้น จาก ${fromLocation} ไปยัง ${toLocation} สำเร็จ`);
+        } else {
+            alert('สต็อกไม่พอ');
+        }
+    }
+
+    // --- Customer Section ---
+    document.getElementById('customerForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const customers = loadData('customers');
+        const newCustomer = {
+            name: document.getElementById('cName').value,
+            phone: document.getElementById('cPhone').value,
+            address: document.getElementById('cAddress').value,
+        };
+        customers.push(newCustomer);
+        saveData('customers', customers);
+        renderCustomersTable();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+        modal.hide();
+        e.target.reset();
+        alert('เพิ่มลูกค้าสำเร็จ');
+    });
+
+    function renderCustomersTable() {
+        const customers = loadData('customers');
+        const tableBody = document.getElementById('customerList');
+        tableBody.innerHTML = '';
+        customers.forEach((c) => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${c.name}</td>
+                <td>${c.phone}</td>
+                <td>${c.address}</td>
+                <td><button class="btn btn-sm btn-info">ดูประวัติ</button></td>
+            `;
+        });
+    }
+
+    document.getElementById('searchCustomer').addEventListener('keyup', (e) => {
+        const filter = e.target.value.toLowerCase();
+        const rows = document.getElementById('customerList').querySelectorAll('tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
+
+    // --- Repair Section ---
+    document.getElementById('repairForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const repairs = loadData('repairs');
+        const newRepair = {
+            id: repairs.length + 1,
+            customer: document.getElementById('rCustomer').value,
+            phone: document.getElementById('rPhone').value,
+            brand: document.getElementById('rBrand').value,
+            model: document.getElementById('rModel').value,
+            issue: document.getElementById('rIssue').value,
+            date: new Date().toISOString(),
+            status: 'รอดำเนินการ'
+        };
+        repairs.push(newRepair);
+        saveData('repairs', repairs);
+        renderRepairsTable();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addRepairModal'));
+        modal.hide();
+        e.target.reset();
+        alert('บันทึกงานซ่อมสำเร็จ');
+    });
+
+    function renderRepairsTable() {
+        const repairs = loadData('repairs');
+        const tableBody = document.getElementById('repairList');
+        tableBody.innerHTML = '';
+        repairs.forEach((r, index) => {
+            const row = tableBody.insertRow();
+            let statusColor = 'bg-warning text-dark';
+            if (r.status === 'กำลังซ่อม') statusColor = 'bg-info text-white';
+            if (r.status === 'เสร็จสิ้น') statusColor = 'bg-success text-white';
+
+            row.innerHTML = `
+                <td>${r.id}</td>
+                <td>${r.customer}</td>
+                <td>${r.brand} ${r.model}</td>
+                <td>${r.issue}</td>
+                <td><span class="badge ${statusColor}">${r.status}</span></td>
+                <td>${new Date(r.date).toLocaleDateString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="updateRepairStatus(${index}, 'กำลังซ่อม')">เริ่มซ่อม</button>
+                    <button class="btn btn-sm btn-success" onclick="updateRepairStatus(${index}, 'เสร็จสิ้น')">เสร็จสิ้น</button>
+                </td>
+            `;
+        });
+    }
+
+    function updateRepairStatus(index, status) {
+        const repairs = loadData('repairs');
+        repairs[index].status = status;
+        saveData('repairs', repairs);
+        renderRepairsTable();
+        alert(`อัปเดตสถานะงานซ่อม ${repairs[index].id} เป็น '${status}' สำเร็จ`);
+    }
+
+    // --- Sales Section ---
+    document.getElementById('searchSale').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const query = e.target.value.toLowerCase();
+            const products = loadData('products');
+            const product = products.find(p => p.code.toLowerCase() === query || p.name.toLowerCase().includes(query));
+            if (product) {
+                addToCart(product);
+            } else {
+                alert('ไม่พบสินค้า');
+            }
+            e.target.value = '';
+        }
+    });
+
+    function addToCart(product) {
+        if (product.stock <= 0) {
+            alert('สินค้าหมดสต็อก');
+            return;
+        }
+
+        const existingItem = cart.find(item => item.code === product.code);
+        if (existingItem) {
+            existingItem.qty += 1;
+        } else {
+            cart.push({
+                code: product.code,
+                name: product.name,
+                location: product.location,
+                price: product.price,
+                cost: product.cost,
+                qty: 1,
+                discount: 0
+            });
+        }
+        renderSalesTable();
+    }
+
+    function renderSalesTable() {
+        const tableBody = document.getElementById('saleList');
+        tableBody.innerHTML = '';
+        let subTotal = 0;
+        let totalDiscount = 0;
+        cart.forEach((item, index) => {
+            const itemTotal = (item.price * item.qty) - item.discount;
+            subTotal += itemTotal;
+            totalDiscount += item.discount;
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${item.name}</td>
+                <td>${item.location || '-'}</td>
+                <td>${item.price}</td>
+                <td><input type="number" value="${item.qty}" min="1" onchange="updateCartQty(${index}, this.value)" class="form-control form-control-sm" style="width: 70px;"></td>
+                <td><input type="number" value="${item.discount}" onchange="updateCartDiscount(${index}, this.value)" class="form-control form-control-sm" style="width: 70px;"></td>
+                <td>${itemTotal.toLocaleString()}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeFromCart(${index})">ลบ</button></td>
+            `;
+        });
+        calculateTotal();
+    }
+
+    function updateCartQty(index, qty) {
+        cart[index].qty = parseInt(qty) > 0 ? parseInt(qty) : 1;
+        renderSalesTable();
+    }
+
+    function updateCartDiscount(index, discount) {
+        cart[index].discount = parseFloat(discount) > 0 ? parseFloat(discount) : 0;
+        renderSalesTable();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        renderSalesTable();
+    }
+
+    function calculateTotal() {
+        const settings = loadData('settings');
+        const vatRate = settings.shopVat / 100;
+        let subTotal = 0;
+        let totalDiscount = 0;
+        cart.forEach(item => {
+            const itemTotal = item.price * item.qty;
+            subTotal += itemTotal;
+            totalDiscount += item.discount;
+        });
+
+        const preTaxTotal = subTotal - totalDiscount;
+        const taxAmount = preTaxTotal * vatRate;
+        const finalTotal = preTaxTotal + taxAmount;
+
+        document.getElementById('subTotal').textContent = preTaxTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        document.getElementById('totalDiscountSummary').textContent = totalDiscount.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        document.getElementById('taxAmount').textContent = taxAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        document.getElementById('cartTotal').textContent = finalTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        document.getElementById('vatRate').textContent = settings.shopVat;
+    }
+
+    document.getElementById('cashReceived').addEventListener('input', () => {
+        const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+        const cartTotal = parseFloat(document.getElementById('cartTotal').textContent.replace(/,/g, ''));
+        const change = cashReceived - cartTotal;
+        document.getElementById('changeDue').textContent = Math.max(0, change).toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    });
+
+    function checkout() {
+        if (cart.length === 0) {
+            alert('กรุณาเพิ่มสินค้าลงในตะกร้าก่อนชำระเงิน');
+            return;
+        }
+
+        const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+        document.getElementById('modalCartTotal').textContent = document.getElementById('cartTotal').textContent;
+        document.getElementById('modalCashReceived').value = '';
+        document.getElementById('modalChangeDue').textContent = '0.00 บาท';
+
+        document.getElementById('paymentMethod').addEventListener('change', (e) => {
+            if (e.target.value === 'cash') {
+                document.getElementById('cashInputGroup').style.display = 'block';
+            } else {
+                document.getElementById('cashInputGroup').style.display = 'none';
+            }
+        });
+
+        document.getElementById('modalCashReceived').addEventListener('input', () => {
+            const cashReceived = parseFloat(document.getElementById('modalCashReceived').value) || 0;
+            const cartTotal = parseFloat(document.getElementById('modalCartTotal').textContent.replace(/,/g, ''));
+            const change = cashReceived - cartTotal;
+            document.getElementById('modalChangeDue').textContent = Math.max(0, change).toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        });
+
+        checkoutModal.show();
+    }
+
+    function completeCheckout() {
+        const products = loadData('products');
+        const sales = loadData('sales');
+        const vatRate = loadData('settings').shopVat / 100;
+        const customerName = document.getElementById('customerName').value || 'ไม่ระบุ';
+        let totalCost = 0;
+
+        cart.forEach(item => {
+            const product = products.find(p => p.code === item.code);
+            if (product) {
+                product.stock -= item.qty;
+                totalCost += product.cost * item.qty;
+            }
+        });
+
+        const preTaxTotal = parseFloat(document.getElementById('subTotal').textContent.replace(/,/g, ''));
+        const total = parseFloat(document.getElementById('cartTotal').textContent.replace(/,/g, ''));
+        const profit = total - totalCost;
+
+        sales.unshift({
+            id: sales.length + 1,
+            date: new Date().toISOString(),
+            customer: customerName,
+            items: cart,
+            subTotal: preTaxTotal,
+            total,
+            totalCost,
+            profit,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            invoiceNumber: 'INV-' + Date.now()
+        });
+
+        saveData('products', products);
+        saveData('sales', sales);
+
+        alert('ชำระเงินสำเร็จ!');
+        cart = [];
+        renderSalesTable();
+        document.getElementById('customerName').value = '';
+
+        const checkoutModal = bootstrap.Modal.getInstance(document.getElementById('checkoutModal'));
+        checkoutModal.hide();
+    }
+    
+    // --- Reports Section ---
+    function generateSalesReport() {
+        const sales = loadData('sales');
+        const products = loadData('products');
+        const today = new Date().toISOString().split('T')[0];
+        const todaySales = sales.filter((s) => s.date.startsWith(today));
+
+        const totalSalesToday = todaySales.reduce((sum, s) => sum + s.total, 0);
+        const totalProfitToday = todaySales.reduce((sum, s) => sum + s.profit, 0);
+
+        document.getElementById('reportSales').textContent = totalSalesToday.toLocaleString() + ' บาท';
+        document.getElementById('reportInvoices').textContent = todaySales.length;
+        document.getElementById('dailyProfit').textContent = totalProfitToday.toLocaleString() + ' บาท';
+
+        // Find best seller
+        const itemSales = {};
+        sales.forEach(s => {
+            s.items.forEach(item => {
+                itemSales[item.code] = (itemSales[item.code] || 0) + item.qty;
+            });
+        });
+        const bestSellerCode = Object.keys(itemSales).sort((a, b) => itemSales[b] - itemSales[a])[0];
+        const bestSellerProduct = products.find(p => p.code === bestSellerCode);
+        document.getElementById('bestSeller').textContent = bestSellerProduct ? bestSellerProduct.name : '-';
+
+        // Weekly Chart
+        if (weeklyChart) weeklyChart.destroy();
+        const weeklyData = {};
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateString = date.toISOString().split('T')[0];
+            const daySales = sales.filter(s => s.date.startsWith(dateString)).reduce((sum, s) => sum + s.total, 0);
+            weeklyData[dateString] = daySales;
+        }
+        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+        weeklyChart = new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(weeklyData),
+                datasets: [{
+                    label: 'ยอดขาย',
+                    data: Object.values(weeklyData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Monthly Chart
+        if (monthlyChart) monthlyChart.destroy();
+        const monthlyData = {};
+        for (let i = 11; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            const monthLabel = date.toLocaleString('th-TH', { month: 'short', year: 'numeric' });
+            const monthString = date.toISOString().slice(0, 7);
+            const monthSales = sales.filter(s => s.date.startsWith(monthString)).reduce((sum, s) => sum + s.total, 0);
+            monthlyData[monthLabel] = monthSales;
+        }
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        monthlyChart = new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(monthlyData),
+                datasets: [{
+                    label: 'ยอดขาย',
+                    data: Object.values(monthlyData),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Recent Sales List
+        const recentSalesList = document.getElementById('recentSalesList');
+        recentSalesList.innerHTML = '';
+        sales.slice(0, 10).forEach(sale => { // Show last 10 sales
+            const row = recentSalesList.insertRow();
+            const items = sale.items.map(i => `${i.name} (${i.qty})`).join(', ');
+            row.innerHTML = `
+                <td>${sale.invoiceNumber}</td>
+                <td>${new Date(sale.date).toLocaleString()}</td>
+                <td>${sale.customer}</td>
+                <td>${items}</td>
+                <td>${sale.total.toLocaleString()} บาท</td>
+            `;
+        });
+    }
+
+    function generateStockReport() {
+        const products = loadData('products');
+        const lowStockProducts = products.filter(p => p.stock <= p.minStock);
+        const stockHistory = loadData('stockHistory');
+        const transferHistory = loadData('transferHistory');
+        const allMovement = [...stockHistory, ...transferHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        // Render low stock
+        const lowStockList = document.getElementById('lowStockList');
+        lowStockList.innerHTML = '';
+        if (lowStockProducts.length === 0) {
+            lowStockList.innerHTML = '<tr><td colspan="4" class="text-center">ไม่มีสินค้าสต๊อกต่ำ</td></tr>';
+        } else {
+            lowStockProducts.forEach(p => {
+                const row = lowStockList.insertRow();
+                row.innerHTML = `<td>${p.code}</td><td>${p.name}</td><td>${p.stock}</td><td>${p.location}</td>`;
+            });
+        }
+
+        // Render all stock
+        const allStockList = document.getElementById('allStockList');
+        allStockList.innerHTML = '';
+        if (products.length === 0) {
+            allStockList.innerHTML = '<tr><td colspan="4" class="text-center">ไม่มีสินค้าในระบบ</td></tr>';
+        } else {
+            products.forEach(p => {
+                const row = allStockList.insertRow();
+                row.innerHTML = `<td>${p.code}</td><td>${p.name}</td><td>${p.stock}</td><td>${p.location}</td>`;
+            });
+        }
+
+        // Render stock movement
+        const stockMovementList = document.getElementById('stockMovementHistory');
+        stockMovementList.innerHTML = '';
+        if (allMovement.length === 0) {
+            stockMovementList.innerHTML = '<tr><td colspan="4" class="text-center">ไม่มีประวัติการเคลื่อนไหวของสต๊อก</td></tr>';
+        } else {
+            allMovement.forEach(m => {
+                const product = products.find(p => p.code === m.code);
+                const row = stockMovementList.insertRow();
+                const type = m.fromLocation ? 'โอนย้าย' : 'รับเข้า';
+                const from = m.fromLocation ? m.fromLocation : 'ผู้จำหน่าย';
+                const to = m.toLocation ? m.toLocation : m.location;
+
+                row.innerHTML = `
+                    <td>${product.name} (${type})</td>
+                    <td>${m.qty}</td>
+                    <td>จาก: ${from} <br> ไปยัง: ${to}</td>
+                    <td>${new Date(m.date).toLocaleString()}</td>
+                `;
+            });
+        }
+    }
+
+    // --- Settings Section ---
+    function loadSettings() {
+        const settings = loadData('settings');
+        document.getElementById('shopName').value = settings.shopName;
+        document.getElementById('shopAddress').value = settings.shopAddress;
+        document.getElementById('shopPhone').value = settings.shopPhone;
+        document.getElementById('shopVat').value = settings.shopVat;
+    }
+
+    function saveSettings() {
+        const settings = {
+            shopName: document.getElementById('shopName').value,
+            shopAddress: document.getElementById('shopAddress').value,
+            shopPhone: document.getElementById('shopPhone').value,
+            shopVat: parseInt(document.getElementById('shopVat').value),
+        };
+        saveData('settings', settings);
+        alert('บันทึกการตั้งค่าสำเร็จ');
+    }
+
+    function backupData() {
+        const data = {
+            products: loadData('products'),
+            sales: loadData('sales'),
+            repairs: loadData('repairs'),
+            stockHistory: loadData('stockHistory'),
+            transferHistory: loadData('transferHistory'),
+            customers: loadData('customers'),
+            settings: loadData('settings')
+        };
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nort_pos_backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('สำรองข้อมูลสำเร็จ!');
+    }
+
+    function restoreData() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.products && data.sales) {
+                        saveData('products', data.products);
+                        saveData('sales', data.sales);
+                        saveData('repairs', data.repairs);
+                        saveData('stockHistory', data.stockHistory);
+                        saveData('transferHistory', data.transferHistory);
+                        saveData('customers', data.customers);
+                        saveData('settings', data.settings);
+                        alert('กู้คืนข้อมูลสำเร็จ!');
+                        location.reload();
+                    } else {
+                        alert('ไฟล์ข้อมูลไม่ถูกต้อง');
+                    }
+                } catch (error) {
+                    alert('เกิดข้อผิดพลาดในการอ่านไฟล์');
+                }
+            };
+            reader.readAsText(file);
+        };
+        fileInput.click();
+    }
+
+    // Initial load
+    window.onload = () => {
+        showSection('home');
+    };
+</script>
+</body>
+</html>
